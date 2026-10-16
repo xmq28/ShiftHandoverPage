@@ -12,16 +12,31 @@
 }
 
 <dl class="row mt-4">
-    <dt class="col-sm-3">Date</dt>
+    <dt class="col-sm-3">Date (Bahrain)</dt>
     <dd class="col-sm-9">@Model.ShiftDate.ToString("dddd, dd MMMM yyyy")</dd>
-    <dt class="col-sm-3">Hours</dt>
+    <dt class="col-sm-3">Hours (Bahrain, UTC+03:00)</dt>
     <dd class="col-sm-9">@Model.StartTime.ToString("HH:mm")-@Model.EndTime.ToString("HH:mm")</dd>
     <dt class="col-sm-3">Status</dt>
     <dd class="col-sm-9">@Model.Status</dd>
+    @if (Model.Status == ShiftHandover.Web.Models.ShiftStatus.Closed)
+    {
+        <dt class="col-sm-3">Report delivery</dt>
+        <dd class="col-sm-9">@(Model.ReportDelivery?.Status.ToString() ?? "Not sent")
+            @if (!string.IsNullOrWhiteSpace(Model.ReportDelivery?.FailureReason))
+            {
+                <span class="text-danger">@Model.ReportDelivery.FailureReason</span>
+            }
+            <a asp-action="Report" asp-route-id="@Model.Id" class="ms-2">Download PDF report</a>
+        </dd>
+    }
     @if (Model.ClaimedBySupervisor is not null)
     {
         <dt class="col-sm-3">Assigned supervisor</dt>
         <dd class="col-sm-9">@Model.ClaimedBySupervisor.FullName</dd>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-warning" role="status">@error</div>
     }
 </dl>
 
@@ -31,14 +46,19 @@
         <button type="submit" class="btn btn-primary">Claim shift</button>
     </form>
 }
-else if (Model.Status == ShiftHandover.Web.Models.ShiftStatus.Claimed)
+
+<section class="mt-4" aria-labelledby="shift-records-heading">
+    <h2 id="shift-records-heading" class="h4">Shift records</h2>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="ShiftRecords" asp-action="Accidents" asp-route-id="@Model.Id" class="btn btn-outline-primary">Accidents</a>
+        <a asp-controller="ShiftRecords" asp-action="Incidents" asp-route-id="@Model.Id" class="btn btn-outline-primary">Incidents</a>
+        <a asp-controller="ShiftRecords" asp-action="Manpower" asp-route-id="@Model.Id" class="btn btn-outline-primary">Manpower</a>
+    </div>
+</section>
+
+@if (Model.CanBeEditedBy(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty))
 {
-    <section class="mt-4" aria-labelledby="shift-records-heading">
-        <h2 id="shift-records-heading" class="h4">Shift records</h2>
-        <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="ShiftRecords" asp-action="Accidents" asp-route-id="@Model.Id" class="btn btn-outline-primary">Accidents</a>
-            <a asp-controller="ShiftRecords" asp-action="Incidents" asp-route-id="@Model.Id" class="btn btn-outline-primary">Incidents</a>
-            <a asp-controller="ShiftRecords" asp-action="Manpower" asp-route-id="@Model.Id" class="btn btn-outline-primary">Manpower</a>
-        </div>
-    </section>
+    <form asp-action="Close" asp-route-id="@Model.Id" method="post" class="mt-4">
+        <button type="submit" class="btn btn-outline-danger">Close shift</button>
+    </form>
 }

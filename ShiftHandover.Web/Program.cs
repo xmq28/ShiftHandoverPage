@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShiftHandover.Web.Data;
 using ShiftHandover.Web.Models;
+using ShiftHandover.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.AddScoped<IShiftReportPdfGenerator, ShiftReportPdfGenerator>();
+builder.Services.AddScoped<IShiftReportEmailSender, SmtpShiftReportEmailSender>();
+builder.Services.AddScoped<IShiftReportDeliveryService, ShiftReportDeliveryService>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHostedService<DailyShiftGenerationWorker>();
+}
 
 var app = builder.Build();
 
@@ -73,7 +82,6 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     await DevelopmentSupervisorSeeder.SeedAsync(scope.ServiceProvider, app.Configuration);
-    await DevelopmentShiftSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
 }
 
 app.Run();

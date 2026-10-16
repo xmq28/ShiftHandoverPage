@@ -1,8 +1,212 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model ShiftHandover.Web.Models.DashboardViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard";
+    var greeting = Model.BahrainNow.Hour < 12 ? "Good morning" : Model.BahrainNow.Hour < 18 ? "Good afternoon" : "Good evening";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="dashboard-page" aria-labelledby="dashboard-title">
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">SUPERVISOR OVERVIEW</p>
+            <h1 id="dashboard-title">@greeting, @Model.SupervisorName</h1>
+            <p class="dashboard-subtitle">Here is the latest across your shift handovers.</p>
+        </div>
+        <div class="dashboard-clock" aria-label="Current Bahrain date and time">
+            <span class="dashboard-clock-date">@Model.BahrainNow.ToString("dddd, dd MMMM yyyy", CultureInfo.InvariantCulture)</span>
+            <span class="dashboard-clock-time">@Model.BahrainNow.ToString("HH:mm") <span>Bahrain time (UTC+03:00)</span></span>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <a asp-controller="Shifts" asp-action="Index" class="btn btn-primary dashboard-primary-action">
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 20 20"><path d="M3 5.5h14M3 10h14M3 14.5h14" /></svg>
+            View all shifts
+        </a>
+        @if (Model.AvailableShifts > 0)
+        {
+            <a asp-controller="Shifts" asp-action="Index" class="btn btn-outline-primary dashboard-secondary-action">Claim a shift</a>
+        }
+    </div>
+
+    <div class="dashboard-metrics" aria-label="Shift summary">
+        <article class="metric-card metric-total">
+            <div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3v3m10-3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z" /></svg></div>
+            <p class="metric-label">Total shifts</p>
+            <p class="metric-value">@Model.TotalShifts</p>
+            <p class="metric-note">Scheduled in the system</p>
+        </article>
+        <article class="metric-card metric-available">
+            <div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" /></svg></div>
+            <p class="metric-label">Available</p>
+            <p class="metric-value">@Model.AvailableShifts</p>
+            <p class="metric-note">Ready to be claimed</p>
+        </article>
+        <article class="metric-card metric-progress">
+            <div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></svg></div>
+            <p class="metric-label">In progress</p>
+            <p class="metric-value">@Model.InProgressShifts</p>
+            <p class="metric-note">Assigned and open</p>
+        </article>
+        <article class="metric-card metric-closed">
+            <div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7" /></svg></div>
+            <p class="metric-label">Closed</p>
+            <p class="metric-value">@Model.ClosedShifts</p>
+            <p class="metric-note">Completed handovers</p>
+        </article>
+    </div>
+
+    <section class="dashboard-section" aria-labelledby="recent-shifts-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="recent-shifts-title">Recent shifts</h2>
+                <p>Latest scheduled shifts and their current ownership.</p>
+            </div>
+            <a asp-controller="Shifts" asp-action="Index" class="section-link">All shifts <span aria-hidden="true">&#8594;</span></a>
+        </div>
+
+        @if (Model.RecentShifts.Count == 0)
+        {
+            <div class="dashboard-empty" role="status">
+                <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3v3m10-3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z" /></svg></div>
+                <h3>No shifts scheduled</h3>
+                <p>There are no shifts to display right now.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive dashboard-table-wrap">
+                <table class="table dashboard-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Shift</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Hours (Bahrain)</th>
+                            <th scope="col">Assigned supervisor</th>
+                            <th scope="col">Status</th>
+                            <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var shift in Model.RecentShifts)
+                        {
+                            <tr>
+                                <th scope="row" data-label="Shift"><span class="shift-title">@shift.Title</span></th>
+                                <td data-label="Date">@shift.ShiftDate.ToString("ddd, dd MMM yyyy", CultureInfo.InvariantCulture)</td>
+                                <td data-label="Hours">@shift.StartTime.ToString("HH:mm")–@shift.EndTime.ToString("HH:mm")</td>
+                                <td data-label="Assigned supervisor">
+                                    @if (shift.IsAssignedToCurrentSupervisor)
+                                    {
+                                        <span class="supervisor-name">You</span>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(shift.SupervisorName))
+                                    {
+                                        @shift.SupervisorName
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Unassigned</span>
+                                    }
+                                </td>
+                                <td data-label="Status">
+                                    @switch (shift.Status)
+                                    {
+                                        case ShiftHandover.Web.Models.ShiftStatus.Available:
+                                            <span class="status-badge status-available"><span></span>Available</span>
+                                            break;
+                                        case ShiftHandover.Web.Models.ShiftStatus.Claimed:
+                                            <span class="status-badge status-progress"><span></span>In progress</span>
+                                            break;
+                                        case ShiftHandover.Web.Models.ShiftStatus.Closed:
+                                            <span class="status-badge status-closed"><span></span>Closed</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="dashboard-row-actions" data-label="Actions">
+                                    @if (shift.Status == ShiftHandover.Web.Models.ShiftStatus.Available)
+                                    {
+                                        <form asp-controller="Shifts" asp-action="Claim" asp-route-id="@shift.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Claim</button>
+                                        </form>
+                                    }
+                                    else if (shift.IsAssignedToCurrentSupervisor && shift.Status == ShiftHandover.Web.Models.ShiftStatus.Claimed)
+                                    {
+                                        <a asp-controller="Shifts" asp-action="Details" asp-route-id="@shift.Id" class="btn btn-sm btn-outline-primary">Continue</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Shifts" asp-action="Details" asp-route-id="@shift.Id" class="btn btn-sm btn-outline-secondary">Details</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="dashboard-section delivery-section" aria-labelledby="delivery-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="delivery-title">Report delivery</h2>
+                <p>Recent handover report email activity.</p>
+            </div>
+        </div>
+        @if (Model.RecentDeliveries.Count == 0)
+        {
+            <p class="delivery-empty" role="status">No report delivery activity yet.</p>
+        }
+        else
+        {
+            <ul class="delivery-list">
+                @foreach (var delivery in Model.RecentDeliveries)
+                {
+                    <li class="delivery-item">
+                        <div class="delivery-symbol" aria-hidden="true">
+                            @if (delivery.Status == ShiftHandover.Web.Models.ReportDeliveryStatus.Sent)
+                            {
+                                <svg viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7" /></svg>
+                            }
+                            else if (delivery.Status == ShiftHandover.Web.Models.ReportDeliveryStatus.Failed)
+                            {
+                                <svg viewBox="0 0 24 24"><path d="M12 8v5m0 3h.01M10 3.8 2.8 17.5A1.7 1.7 0 0 0 4.3 20h15.4a1.7 1.7 0 0 0 1.5-2.5L13.5 3.8a1.7 1.7 0 0 0-3 0Z" /></svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></svg>
+                            }
+                        </div>
+                        <div class="delivery-copy">
+                            <a asp-controller="Shifts" asp-action="Details" asp-route-id="@delivery.ShiftId" class="delivery-title">@delivery.ShiftTitle report</a>
+                            @if (delivery.Status == ShiftHandover.Web.Models.ReportDeliveryStatus.Sent && delivery.SentAt is not null)
+                            {
+                                <span>Sent @ShiftHandover.Web.Services.BahrainTime.Format(delivery.SentAt.Value)</span>
+                            }
+                            else
+                            {
+                                <span>Started @ShiftHandover.Web.Services.BahrainTime.Format(delivery.CreatedAt)</span>
+                            }
+                            @if (delivery.Status == ShiftHandover.Web.Models.ReportDeliveryStatus.Failed && !string.IsNullOrWhiteSpace(delivery.FailureReason))
+                            {
+                                <span class="delivery-error">@delivery.FailureReason</span>
+                            }
+                        </div>
+                        @switch (delivery.Status)
+                        {
+                            case ShiftHandover.Web.Models.ReportDeliveryStatus.Sent:
+                                <span class="status-badge status-sent">Sent</span>
+                                break;
+                            case ShiftHandover.Web.Models.ReportDeliveryStatus.Failed:
+                                <span class="status-badge status-failed">Failed</span>
+                                break;
+                            default:
+                                <span class="status-badge status-pending">Pending</span>
+                                break;
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</section>

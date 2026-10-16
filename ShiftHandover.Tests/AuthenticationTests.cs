@@ -38,10 +38,15 @@ public class AuthenticationTests : IClassFixture<AuthenticationTests.Factory>
             using var scope = Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await db.Database.EnsureCreatedAsync();
+            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var roleResult = await roles.CreateAsync(new IdentityRole(DevelopmentSupervisorSeeder.SupervisorRole));
+            Assert.True(roleResult.Succeeded);
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var result = await users.CreateAsync(
-                new ApplicationUser { UserName = Email, Email = Email, FullName = "Tester" }, Password);
+            var user = new ApplicationUser { UserName = Email, Email = Email, EmailConfirmed = true, FullName = "Tester" };
+            var result = await users.CreateAsync(user, Password);
             Assert.True(result.Succeeded);
+            var roleAssignment = await users.AddToRoleAsync(user, DevelopmentSupervisorSeeder.SupervisorRole);
+            Assert.True(roleAssignment.Succeeded);
         }
 
         public new async Task DisposeAsync()
@@ -97,6 +102,11 @@ public class AuthenticationTests : IClassFixture<AuthenticationTests.Factory>
 
         var home = await client.GetAsync("/");
         Assert.Equal(System.Net.HttpStatusCode.OK, home.StatusCode);
+        var dashboard = await home.Content.ReadAsStringAsync();
+        Assert.Contains("Tester", dashboard, StringComparison.Ordinal);
+        Assert.Contains("Recent shifts", dashboard, StringComparison.Ordinal);
+        Assert.Contains("No shifts scheduled", dashboard, StringComparison.Ordinal);
+        Assert.Contains("No report delivery activity yet", dashboard, StringComparison.Ordinal);
     }
 
     [Theory]

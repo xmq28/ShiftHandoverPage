@@ -63,6 +63,7 @@ public sealed class AccidentLogViewModel
 {
     public required int ShiftId { get; init; }
     public required string ShiftTitle { get; init; }
+    public required bool CanEdit { get; init; }
     public required IReadOnlyList<Accident> Records { get; init; }
     public required AccidentInputModel Input { get; init; }
 }
@@ -71,6 +72,7 @@ public sealed class IncidentLogViewModel
 {
     public required int ShiftId { get; init; }
     public required string ShiftTitle { get; init; }
+    public required bool CanEdit { get; init; }
     public required IReadOnlyList<Incident> Records { get; init; }
     public required IncidentInputModel Input { get; init; }
 }
@@ -79,6 +81,7 @@ public sealed class ManpowerLogViewModel
 {
     public required int ShiftId { get; init; }
     public required string ShiftTitle { get; init; }
+    public required bool CanEdit { get; init; }
     public required IReadOnlyList<ManpowerRecord> Records { get; init; }
     public required ManpowerInputModel Input { get; init; }
 }

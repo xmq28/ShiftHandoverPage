@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftHandover.Web.Data;
 using ShiftHandover.Web.Models;
+using ShiftHandover.Web.Services;
 
 namespace ShiftHandover.Web.Controllers;
 
@@ -13,7 +14,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
     [HttpGet]
     public async Task<IActionResult> Accidents(int id)
     {
-        var shift = await FindOwnedOpenShiftAsync(id);
+        var shift = await FindShiftAsync(id);
         if (shift is null)
         {
             return NotFound();
@@ -28,6 +29,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = records,
             Input = new AccidentInputModel()
         });
@@ -51,7 +53,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         db.Accidents.Add(new Accident
         {
             ShiftId = shift.Id,
-            OccurredAt = input.OccurredAt!.Value,
+            OccurredAt = BahrainTime.FromLocalInput(input.OccurredAt!.Value),
             Location = input.Location.Trim(),
             Description = input.Description.Trim(),
             Severity = input.Severity,
@@ -67,7 +69,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
     [HttpGet]
     public async Task<IActionResult> Incidents(int id)
     {
-        var shift = await FindOwnedOpenShiftAsync(id);
+        var shift = await FindShiftAsync(id);
         if (shift is null)
         {
             return NotFound();
@@ -82,6 +84,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = records,
             Input = new IncidentInputModel()
         });
@@ -105,7 +108,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         db.Incidents.Add(new Incident
         {
             ShiftId = shift.Id,
-            OccurredAt = input.OccurredAt!.Value,
+            OccurredAt = BahrainTime.FromLocalInput(input.OccurredAt!.Value),
             Category = input.Category.Trim(),
             Description = input.Description.Trim(),
             Resolved = input.Resolved,
@@ -120,7 +123,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
     [HttpGet]
     public async Task<IActionResult> Manpower(int id)
     {
-        var shift = await FindOwnedOpenShiftAsync(id);
+        var shift = await FindShiftAsync(id);
         if (shift is null)
         {
             return NotFound();
@@ -136,6 +139,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = records,
             Input = new ManpowerInputModel()
         });
@@ -184,11 +188,19 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
             shift.Id == id && shift.Status == ShiftStatus.Claimed && shift.ClaimedBySupervisorId == supervisorId);
     }
 
+    private Task<Shift?> FindShiftAsync(int id) => db.Shifts
+        .AsNoTracking()
+        .SingleOrDefaultAsync(shift => shift.Id == id);
+
+    private bool CanEdit(Shift shift) =>
+        shift.CanBeEditedBy(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty);
+
     private async Task<AccidentLogViewModel> BuildAccidentViewModelAsync(Shift shift, AccidentInputModel input) =>
         new()
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = await db.Accidents.AsNoTracking()
                 .Where(record => record.ShiftId == shift.Id)
                 .OrderByDescending(record => record.OccurredAt)
@@ -201,6 +213,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = await db.Incidents.AsNoTracking()
                 .Where(record => record.ShiftId == shift.Id)
                 .OrderByDescending(record => record.OccurredAt)
@@ -213,6 +226,7 @@ public class ShiftRecordsController(ApplicationDbContext db) : Controller
         {
             ShiftId = shift.Id,
             ShiftTitle = shift.Title,
+            CanEdit = CanEdit(shift),
             Records = await db.ManpowerRecords.AsNoTracking()
                 .Where(record => record.ShiftId == shift.Id)
                 .OrderBy(record => record.Department)

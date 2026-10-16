@@ -1,9 +1,20 @@
 using ShiftHandover.Web.Models;
+using ShiftHandover.Web.Services;
 
 namespace ShiftHandover.Tests;
 
 public class ShiftDomainTests
 {
+    [Fact]
+    public void BahrainDate_ChangesAtBahrainMidnightRatherThanUtcMidnight()
+    {
+        var beforeBahrainMidnight = new DateTimeOffset(2026, 10, 15, 20, 59, 0, TimeSpan.Zero);
+        var atBahrainMidnight = new DateTimeOffset(2026, 10, 15, 21, 0, 0, TimeSpan.Zero);
+
+        Assert.Equal(new DateOnly(2026, 10, 15), BahrainTime.GetLocalDate(beforeBahrainMidnight));
+        Assert.Equal(new DateOnly(2026, 10, 16), BahrainTime.GetLocalDate(atBahrainMidnight));
+    }
+
     [Fact]
     public void Claim_AssignsAvailableShiftToSupervisor()
     {
