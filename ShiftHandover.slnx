@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ShiftHandover.Tests/ShiftHandover.Tests.csproj" />
+  <Project Path="ShiftHandover.Web/ShiftHandover.Web.csproj" />
+</Solution>

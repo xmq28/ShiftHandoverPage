@@ -1,0 +1,71 @@
+@model ManpowerLogViewModel
+@{
+    ViewData["Title"] = "Manpower log";
+}
+
+<p><a asp-controller="Shifts" asp-action="Details" asp-route-id="@Model.ShiftId">&larr; @Model.ShiftTitle</a></p>
+<h1 class="h2">Manpower log</h1>
+
+<form asp-action="Manpower" asp-route-id="@Model.ShiftId" method="post" class="mt-4 mb-5">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Input.Department" class="form-label"></label>
+            <input asp-for="Input.Department" class="form-control" />
+            <span asp-validation-for="Input.Department" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.Role" class="form-label"></label>
+            <input asp-for="Input.Role" class="form-control" />
+            <span asp-validation-for="Input.Role" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.Required" class="form-label"></label>
+            <input asp-for="Input.Required" class="form-control" type="number" min="0" />
+            <span asp-validation-for="Input.Required" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.Present" class="form-label"></label>
+            <input asp-for="Input.Present" class="form-control" type="number" min="0" />
+            <span asp-validation-for="Input.Present" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Input.Absent" class="form-label"></label>
+            <input asp-for="Input.Absent" class="form-control" type="number" min="0" />
+            <span asp-validation-for="Input.Absent" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Input.Notes" class="form-label"></label>
+            <textarea asp-for="Input.Notes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.Notes" class="text-danger"></span>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Save manpower</button>
+</form>
+
+<h2 class="h4">Recorded manpower</h2>
+@if (Model.Records.Count == 0)
+{
+    <p class="text-muted">No manpower records have been recorded for this shift.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Department</th><th>Role</th><th>Required</th><th>Present</th><th>Absent</th><th>Notes</th></tr></thead>
+            <tbody>
+                @foreach (var record in Model.Records)
+                {
+                    <tr>
+                        <td>@record.Department</td>
+                        <td>@record.Role</td>
+                        <td>@record.Required</td>
+                        <td>@record.Present</td>
+                        <td>@record.Absent</td>
+                        <td>@record.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,71 @@
+@model AccidentLogViewModel
+@{
+    ViewData["Title"] = "Accident log";
+}
+
+<p><a asp-controller="Shifts" asp-action="Details" asp-route-id="@Model.ShiftId">&larr; @Model.ShiftTitle</a></p>
+<h1 class="h2">Accident log</h1>
+
+<form asp-action="Accidents" asp-route-id="@Model.ShiftId" method="post" class="mt-4 mb-5">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Input.OccurredAt" class="form-label">Date and time</label>
+            <input asp-for="Input.OccurredAt" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" />
+            <span asp-validation-for="Input.OccurredAt" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.Location" class="form-label"></label>
+            <input asp-for="Input.Location" class="form-control" />
+            <span asp-validation-for="Input.Location" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.Severity" class="form-label"></label>
+            <select asp-for="Input.Severity" asp-items="Html.GetEnumSelectList<AccidentSeverity>()" class="form-select"></select>
+            <span asp-validation-for="Input.Severity" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Input.Description" class="form-label"></label>
+            <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.InjuredPerson" class="form-label"></label>
+            <input asp-for="Input.InjuredPerson" class="form-control" />
+            <span asp-validation-for="Input.InjuredPerson" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Input.ActionTaken" class="form-label"></label>
+            <input asp-for="Input.ActionTaken" class="form-control" />
+            <span asp-validation-for="Input.ActionTaken" class="text-danger"></span>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Save accident</button>
+</form>
+
+<h2 class="h4">Recorded accidents</h2>
+@if (Model.Records.Count == 0)
+{
+    <p class="text-muted">No accidents have been recorded for this shift.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Date and time</th><th>Location</th><th>Severity</th><th>Description</th><th>Injured person</th><th>Action taken</th></tr></thead>
+            <tbody>
+                @foreach (var record in Model.Records)
+                {
+                    <tr>
+                        <td>@record.OccurredAt.ToString("g")</td>
+                        <td>@record.Location</td>
+                        <td>@record.Severity</td>
+                        <td>@record.Description</td>
+                        <td>@record.InjuredPerson</td>
+                        <td>@record.ActionTaken</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

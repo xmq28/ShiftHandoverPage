@@ -1,0 +1,29 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+TestResults/
+artifacts/
+
+# Visual Studio local state
+.vs/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# Test and diagnostic output
+*.trx
+*.coverage
+*.coveragexml
+*.log
+
+# Local database files
+**/app.db
+**/app.db-shm
+**/app.db-wal
+
+# Operating system files
+Thumbs.db
+.DS_Store
